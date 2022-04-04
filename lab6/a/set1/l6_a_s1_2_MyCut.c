@@ -44,10 +44,12 @@ struct CommandBehaviour {
 } behaviour;
 
 int parseArguments ( int argumentCount, char ** arguments );
-int parseListForBytes ( char const * argument );
-int parseListForFields ( char const * argument );
+int parseList ( char const * argument );
 int parseDelim ( char const * argument );
 void printHelp ();
+
+bool isStringNumeric ( char const * string );
+int convertStringToInt ( char const * string, int * pInt );
 
 int main ( int argumentCount, char ** arguments ) {
 
@@ -99,32 +101,159 @@ int parseArguments ( int argumentCount, char ** arguments ) {
             }
 
         } else if ( expectedListForB ) {
-            if ( parseListForBytes ( arguments[i] ) != 0 ) {
-
+            if ( parseList  ( arguments[i] ) != 0 ) {
+                return 1;
             }
 
             expectedListForB    = false;
 
         } else if ( expectedListForF ) {
-            parseListForFields ( arguments[i] );
-            expectedListForB    = false;
+            if ( parseList ( arguments[i] ) != 0 ) {
+                return 1;
+            }
+
+            expectedListForF    = false;
 
         } else {
-            parseDelim ( arguments[i] );
+            if ( parseDelim ( arguments[i] ) != 0 ) {
+                return 1;
+            }
+
             expectedDelimForC   = false;
 
         }
     }
 
+    if ( behaviour.cutByFields && behaviour.cutByBytes ) {
+        fprintf (
+                stderr,
+                "Cannot cut by both bytes and fields\n"
+        );
+
+        return 1;
+    }
+
+    if ( ! behaviour.cutByFields && ! behaviour.cutByBytes ) {
+        fprintf (
+                stderr,
+                "Must cut by either bytes or fields\n"
+        );
+
+        return 1;
+    }
+
     return 0;
 }
 
-int parseListForBytes ( char const * argument ) {
+int parseList ( char const * argument ) {
+    size_t argumentLength = strlen ( argument );
+    char * listOfRanges = (char *) malloc ( argumentLength + 1 );
+    memcpy ( listOfRanges, argument, argumentLength + 1 );
 
+    char * pCurrentSegment = strtok ( listOfRanges, "," );
+
+    while ( pCurrentSegment != NULL ) {
+
+        size_t segmentLength    = strlen ( pCurrentSegment );
+        char * pDash            = strchr ( pCurrentSegment, '-' );
+
+        struct Range currentRange;
+
+        if ( pDash == NULL ) {
+
+            int number;
+            if ( convertStringToInt ( pCurrentSegment, & number ) != 0 ) {
+                free ( listOfRanges );
+                return 1;
+            }
+
+            currentRange.start  = number;
+            currentRange.end    = number;
+
+        } else {
+            int dashPos = (int) (pDash - pCurrentSegment);
+
+            if ( dashPos == 0 ) {
+                int number;
+                if ( convertStringToInt ( pCurrentSegment + 1, & number ) != 0 ) {
+                    free ( listOfRanges );
+                    return 1;
+                }
+
+                currentRange.start  = 0;
+                currentRange.end    = number;
+
+            } else if ( dashPos == segmentLength - 1 ) {
+                int number;
+                * pDash = '\0';
+
+                if ( convertStringToInt ( pCurrentSegment, & number ) != 0 ) {
+                    free ( listOfRanges );
+                    return 1;
+                }
+
+                currentRange.start  = number;
+                currentRange.end    = -1;
+            } else {
+
+                char * pBeforeDash  = pCurrentSegment;
+                char * pAfterDash   = pDash + 1;
+                * pDash             = '\0';
+
+                int leftNumber, rightNumber;
+
+                if (
+                        convertStringToInt ( pBeforeDash, & leftNumber ) != 0 ||
+                        convertStringToInt ( pAfterDash, & rightNumber ) != 0
+                ) {
+
+                    free ( listOfRanges );
+                    return 1;
+                }
+
+                currentRange.start  = leftNumber;
+                currentRange.end    = rightNumber;
+            }
+        }
+
+        behaviour.ranges[ behaviour.rangeCount ++ ] = currentRange;
+
+        pCurrentSegment = strtok ( NULL, "," );
+    }
+
+    free ( listOfRanges );
+    return 0;
 }
 
-int parseListForFields ( char const * argument );
-int parseDelim ( char const * argument );
+int parseDelim ( char const * argument ) {
+    behaviour.customSeparatorValue = argument[0];
+    return 0;
+}
+
+int convertStringToInt ( char const * string, int * pInt ) {
+    if ( ! isStringNumeric ( string ) ) {
+        fprintf (
+                stderr,
+                "Unexpected symbol '%s', expected integer\n",
+                string
+        );
+
+        return 1;
+    }
+
+    * pInt = (int) strtol ( string, NULL, 10 );
+
+    if ( * pInt == 0 ) {
+        fprintf (
+                stderr,
+                "All ranges are numbered from 1'\n"
+        );
+
+        return 1;
+    }
+
+    return 0;
+}
 
 void printHelp () {
     fprintf (
