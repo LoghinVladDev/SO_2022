@@ -4,19 +4,80 @@
 
 /**
 * [#1: The filter NoVocals]
-Să se scrie un program C care primește de la linia de comandă numele a două fișiere, cu care va face următoarea procesare:
-    va copia conținutul fișierului de intrare în cel de ieșire, eliminând vocalele întâlnite (majuscule și minuscule).
+Să se scrie un program C care primește de la linia de comandă numele a două fișiere,
+ cu care va face următoarea procesare:
+    va copia conținutul fișierului de intrare în cel de ieșire, eliminând vocalele
+    întâlnite (majuscule și minuscule).
     În caz că fișierul de ieșire deja există, se va cere confirmare de suprascriere.
-    Respectiv, va fi creat în cazul în care nu există, cu drepturi de citire și scriere doar pentru proprietar.
+    Respectiv, va fi creat în cazul în care nu există, cu drepturi de citire și scriere
+    doar pentru proprietar.
 
 Cerință: se vor utiliza apelurile de sistem din API-ul POSIX pentru accesarea fișierelor.
 
-(Indicație: printr-o singură parcurgere a fișierului de intrare, copiați fiecare caracter citit, aplicând transformarea cerută, în fișierul de ieșire.)
+(Indicație: printr-o singură parcurgere a fișierului de intrare, copiați fiecare caracter
+ citit, aplicând transformarea cerută, în fișierul de ieșire.)
 Cerință suplimentară:
     dacă de la linia de comandă se primește un singur nume de fișier,
     sau dacă numele fișierului de ieșire coincide cu numele celui de intrare,
-    atunci se va trata, într-un mod adecvat, această situație (i.e., nu se mai face copiere, ci supra-scriere).
+    atunci se va trata, într-un mod adecvat, această situație (i.e., nu se mai
+    face copiere, ci supra-scriere).
 */
+
+
+/**
+ * asta e de 4/4/22
+ */
+//#include <unistd.h>
+//#include <stdlib.h>
+//#include <stdio.h>
+//#include <fcntl.h>
+//#include <stdbool.h>
+//
+//void readFile (char * fileName);
+//bool isVowel(char letter);
+//void writeToFile(char * outFileName);
+//
+//char inFileContents[1024];
+//
+//int main (
+//        int     argumentCount,
+//        char ** arguments
+//) {
+//
+//    readFile (arguments[1]);
+//    writeToFile (arguments[2]);
+//
+//    return 0;
+//}
+//
+//void readFile(char * fileName) {
+//    int inputFile = open(fileName, O_RDONLY);
+//    read(inputFile, inFileContents, 1024);
+//    close(inputFile);
+//}
+//
+//#include <string.h>
+//void writeToFile(char * outFileName) {
+//    int outFile = open(outFileName, O_WRONLY);
+//    for(int i = 0; i < strlen(inFileContents); i++){
+//        if(!isVowel(inFileContents[i])){
+//            write(outFile,
+//                  & inFileContents[i],
+//                  1);
+//        }
+//        close(outFile);
+//    }
+//}
+//
+//bool isVowel(char letter){
+//    if(strchr("aeiouAEIOU", letter) != NULL)
+//        return true;
+//    return false;
+//}
+
+/**
+ * asta e a mea, cu toate verificarile
+ */
 
 #include <stdio.h>
 #include <unistd.h>
