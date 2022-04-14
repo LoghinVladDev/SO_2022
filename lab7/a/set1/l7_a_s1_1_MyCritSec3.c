@@ -163,7 +163,9 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
         int                         readByteCount = 0;
         bool                        productFound = false;
         struct Instruction  * const pCurrentInstruction = & pInstructionSet->instructions[i];
+        /* avem o instr in pCurrentInstruction de forma id, quant */
 
+        /* cautam in fisier daca exista produsul. Citim un int + float pana cand nu mai avem ce citi */
         do {
 
             int     productID;
@@ -172,18 +174,22 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
             readByteCount = read ( databaseFile, & productID, sizeof ( int ) );
             readByteCount = read ( databaseFile, & productQuantity, sizeof ( float ) );
 
+            /// daca am gasit produsul pe care treubie sa operam
             if ( pCurrentInstruction->productID == productID ) {
                 struct flock fileLock;
 
                 lseek ( databaseFile, - (int) ( sizeof ( int ) + sizeof ( float ) ), SEEK_SET );
+                /// fiindca urmeaza sa actualizam ( probabil ) produsul, ne ducem inaitne de a-l citi
 
                 fileLock.l_type     = F_WRLCK;
                 fileLock.l_whence   = SEEK_CUR;
                 fileLock.l_len      = sizeof ( int ) + sizeof ( float );
                 fileLock.l_start    = 0;
+                /// blocam fisierul ( de la poz. curenta - pe care abia am pus-o inainte de produsele noastre, cat sa blocam un int si float )
 
                 fcntl ( depositFileName, F_SETLKW, & fileLock );
 
+                //// daca nu avem destul prod. in depozit, afisam
                 if ( productQuantity > pCurrentInstruction->quantity ) {
                     productQuantity += pCurrentInstruction->quantity;
                 } else {
@@ -191,14 +197,19 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
                 }
 
                 lseek ( databaseFile, sizeof ( int ), SEEK_CUR );
+                /// product id nu trebuie actualizat, il sarim
                 write ( databaseFile, & productQuantity, sizeof ( float ) );
+                /// act. cantitatea
+                /// ATENTIE!!!, s-a mutat file index-ul dupa cele doua in urma write-urilor
 
                 productFound = true;
+                //// am gasit prod, nu trebuie sa-l adaguam la final
 
                 fileLock.l_type     = F_UNLCK;
                 fileLock.l_whence   = SEEK_CUR;
                 fileLock.l_len      = sizeof ( int ) + sizeof ( float );
                 fileLock.l_start    = - (int) ( sizeof ( int ) + sizeof ( float ) );
+                /// deblocam fisierul ( suntem dupa produse, deci pe regiunea cu un int si un float in spate )
 
                 fcntl ( depositFileName, F_SETLKW, & fileLock );
             }
@@ -207,16 +218,20 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
 
         if ( ! productFound ) {
 
+
+            /// aici acelasi lucru, daca nu am gasit produsul in fisier
+            /// adaugam la final, deci ne putem folosi de seek-end
+
             struct flock fileLock;
 
             fileLock.l_type     = F_WRLCK;
-            fileLock.l_whence   = SEEK_SET;
+            fileLock.l_whence   = SEEK_END;
             fileLock.l_start    = 0;
             fileLock.l_len      = sizeof ( int ) + sizeof ( float );
 
             fcntl ( databaseFile, F_SETLKW, & fileLock );
 
-            lseek ( databaseFile, 0, SEEK_SET );
+            lseek ( databaseFile, 0, SEEK_END );
 
             if ( pCurrentInstruction->quantity > 0.0f ) {
 
@@ -226,7 +241,7 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
             }
 
             fileLock.l_type     = F_UNLCK;
-            fileLock.l_whence   = SEEK_SET;
+            fileLock.l_whence   = SEEK_END;
             fileLock.l_start    = - (int) ( sizeof ( int ) + sizeof ( float ) );
             fileLock.l_len      = sizeof ( int ) + sizeof ( float );
 
