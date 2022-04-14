@@ -160,14 +160,14 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
 
     for ( int i = 0; i < pInstructionSet->count; ++ i ) {
 
-        int     readByteCount = 0;
-        bool    productFound = false;
+        int                         readByteCount = 0;
+        bool                        productFound = false;
+        struct Instruction  * const pCurrentInstruction = & pInstructionSet->instructions[i];
 
         do {
 
-            int                         productID;
-            float                       productQuantity;
-            struct Instruction  * const pCurrentInstruction = & pInstructionSet->instructions[i];
+            int     productID;
+            float   productQuantity;
 
             readByteCount = read ( databaseFile, & productID, sizeof ( int ) );
             readByteCount = read ( databaseFile, & productQuantity, sizeof ( float ) );
@@ -204,5 +204,33 @@ void executeInstructions ( struct InstructionSet const * pInstructionSet, char c
             }
 
         } while ( readByteCount > 0 );
+
+        if ( ! productFound ) {
+
+            struct flock fileLock;
+
+            fileLock.l_type     = F_WRLCK;
+            fileLock.l_whence   = SEEK_SET;
+            fileLock.l_start    = 0;
+            fileLock.l_len      = sizeof ( int ) + sizeof ( float );
+
+            fcntl ( databaseFile, F_SETLKW, & fileLock );
+
+            lseek ( databaseFile, 0, SEEK_SET );
+
+            if ( pCurrentInstruction->quantity > 0.0f ) {
+
+                write(databaseFile, &pCurrentInstruction->productID, sizeof(int));
+                write(databaseFile, &pCurrentInstruction->quantity, sizeof(float));
+
+            }
+
+            fileLock.l_type     = F_UNLCK;
+            fileLock.l_whence   = SEEK_SET;
+            fileLock.l_start    = - (int) ( sizeof ( int ) + sizeof ( float ) );
+            fileLock.l_len      = sizeof ( int ) + sizeof ( float );
+
+            fcntl ( databaseFile, F_SETLKW, & fileLock );
+        }
     }
 }
