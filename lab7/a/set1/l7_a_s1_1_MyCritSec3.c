@@ -98,12 +98,14 @@ Se va pregăti un mediu pentru testare, compus din: programul executabil,
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <stdbool.h>
 
 #define MAX_INSTRUCTIONS 128
 
 struct Instruction {
-    int productID;
-    int quantity;
+    int     productID;
+    float   quantity;
 };
 
 struct InstructionSet {
@@ -114,6 +116,7 @@ struct InstructionSet {
 struct InstructionSet instructionSet;
 
 void parseInstructionSet ( char const * fileName );
+void executeInstructions ( struct InstructionSet const *, char const * depositFileName );
 
 int main ( int argumentCount, char ** arguments ) {
 
@@ -127,6 +130,7 @@ int main ( int argumentCount, char ** arguments ) {
     }
 
     parseInstructionSet ( arguments[2] );
+    executeInstructions ( & instructionSet, arguments[1] );
 }
 
 void parseInstructionSet ( char const * fileName ) {
@@ -147,5 +151,58 @@ void parseInstructionSet ( char const * fileName ) {
                 .productID  = strtol ( pProductID, NULL, 10 ),
                 .quantity   = strtol ( pProductQuantity, NULL, 10 )
         };
+    }
+}
+
+void executeInstructions ( struct InstructionSet const * pInstructionSet, char const * depositFileName ) {
+
+    int databaseFile = open ( depositFileName, O_RDWR | O_CREAT );
+
+    for ( int i = 0; i < pInstructionSet->count; ++ i ) {
+
+        int     readByteCount = 0;
+        bool    productFound = false;
+
+        do {
+
+            int                         productID;
+            float                       productQuantity;
+            struct Instruction  * const pCurrentInstruction = & pInstructionSet->instructions[i];
+
+            readByteCount = read ( databaseFile, & productID, sizeof ( int ) );
+            readByteCount = read ( databaseFile, & productQuantity, sizeof ( float ) );
+
+            if ( pCurrentInstruction->productID == productID ) {
+                struct flock fileLock;
+
+                lseek ( databaseFile, - (int) ( sizeof ( int ) + sizeof ( float ) ), SEEK_SET );
+
+                fileLock.l_type     = F_WRLCK;
+                fileLock.l_whence   = SEEK_CUR;
+                fileLock.l_len      = sizeof ( int ) + sizeof ( float );
+                fileLock.l_start    = 0;
+
+                fcntl ( depositFileName, F_SETLKW, & fileLock );
+
+                if ( productQuantity > pCurrentInstruction->quantity ) {
+                    productQuantity += pCurrentInstruction->quantity;
+                } else {
+                    printf ( "Not enough quantity for product %d\n", pCurrentInstruction->productID );
+                }
+
+                lseek ( databaseFile, sizeof ( int ), SEEK_CUR );
+                write ( databaseFile, & productQuantity, sizeof ( float ) );
+
+                productFound = true;
+
+                fileLock.l_type     = F_UNLCK;
+                fileLock.l_whence   = SEEK_CUR;
+                fileLock.l_len      = sizeof ( int ) + sizeof ( float );
+                fileLock.l_start    = - (int) ( sizeof ( int ) + sizeof ( float ) );
+
+                fcntl ( depositFileName, F_SETLKW, & fileLock );
+            }
+
+        } while ( readByteCount > 0 );
     }
 }
