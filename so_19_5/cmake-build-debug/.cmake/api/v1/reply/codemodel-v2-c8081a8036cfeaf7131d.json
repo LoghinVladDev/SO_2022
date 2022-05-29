@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/stefan/Documents/GitHub/Projects/so_19_5/cmake-build-debug",
-		"source" : "/home/stefan/Documents/GitHub/Projects/so_19_5"
+		"build" : "/home/stefan/Documents/GitHub/LaboratoareSo/SO_2022/so_19_5/cmake-build-debug",
+		"source" : "/home/stefan/Documents/GitHub/LaboratoareSo/SO_2022/so_19_5"
 	},
 	"version" : 
 	{

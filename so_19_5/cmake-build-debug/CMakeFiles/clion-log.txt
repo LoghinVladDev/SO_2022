@@ -1,4 +1,4 @@
-/home/stefan/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/221.5591.52/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/stefan/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/221.5591.52/bin/ninja/linux/ninja -G Ninja -S /home/stefan/Documents/GitHub/Projects/so_19_5 -B /home/stefan/Documents/GitHub/Projects/so_19_5/cmake-build-debug
+/home/stefan/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/221.5080.224/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/stefan/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/221.5080.224/bin/ninja/linux/ninja -G Ninja -S /home/stefan/Documents/GitHub/LaboratoareSo/SO_2022/so_19_5 -B /home/stefan/Documents/GitHub/LaboratoareSo/SO_2022/so_19_5/cmake-build-debug
 -- The C compiler identification is GNU 11.2.0
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
@@ -7,4 +7,4 @@
 -- Detecting C compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/stefan/Documents/GitHub/Projects/so_19_5/cmake-build-debug
+-- Build files have been written to: /home/stefan/Documents/GitHub/LaboratoareSo/SO_2022/so_19_5/cmake-build-debug
