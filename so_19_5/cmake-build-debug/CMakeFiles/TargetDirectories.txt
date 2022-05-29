@@ -1,0 +1,3 @@
+/home/stefan/Documents/GitHub/Projects/so_19_5/cmake-build-debug/CMakeFiles/so_19_5.dir
+/home/stefan/Documents/GitHub/Projects/so_19_5/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/stefan/Documents/GitHub/Projects/so_19_5/cmake-build-debug/CMakeFiles/rebuild_cache.dir
